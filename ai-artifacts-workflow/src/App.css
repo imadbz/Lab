@@ -1,0 +1,275 @@
+/* ---- Layout ---- */
+.app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: #0f0f1a;
+  color: #e0e0e0;
+}
+
+/* ---- Sidebar ---- */
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: #16162a;
+  border-right: 1px solid #2a2a4a;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid #2a2a4a;
+}
+
+.sidebar-header h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a78bfa, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sidebar-subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #888;
+}
+
+.sidebar-category {
+  padding: 8px 16px;
+}
+
+.category-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #777;
+  margin: 8px 0 6px;
+}
+
+.sidebar-node {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  background: #1e1e38;
+  border-left: 3px solid;
+  border-radius: 4px;
+  cursor: grab;
+  transition: background 0.15s;
+}
+
+.sidebar-node:hover {
+  background: #282850;
+}
+
+.sidebar-node:active {
+  cursor: grabbing;
+}
+
+.sidebar-node-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sidebar-node-desc {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.sidebar-footer {
+  padding: 16px;
+  margin-top: auto;
+  border-top: 1px solid #2a2a4a;
+}
+
+.run-button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #7c5cbf, #5b8def);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.15s;
+}
+
+.run-button:hover {
+  opacity: 0.9;
+}
+
+.run-icon {
+  font-size: 12px;
+}
+
+/* ---- Canvas ---- */
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+/* ---- Toolbar ---- */
+.toolbar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  gap: 6px;
+}
+
+.toolbar-btn {
+  padding: 6px 14px;
+  border: 1px solid #3a3a5a;
+  border-radius: 4px;
+  background: #1e1e38;
+  color: #ccc;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.toolbar-btn:hover {
+  background: #2a2a50;
+}
+
+/* ---- Workflow Node ---- */
+.workflow-node {
+  min-width: 200px;
+  max-width: 260px;
+  background: #1a1a30;
+  border: 1px solid #2a2a4a;
+  border-top: 3px solid;
+  border-radius: 8px;
+  font-size: 13px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.workflow-node:hover {
+  border-color: #4a4a7a;
+}
+
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 5px 5px 0 0;
+  color: #fff;
+}
+
+.node-category {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.node-title {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.node-body {
+  padding: 8px 10px 10px;
+}
+
+.node-field-group {
+  margin-bottom: 6px;
+}
+
+.node-field-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #999;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.node-field {
+  width: 100%;
+  padding: 5px 7px;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+  background: #12122a;
+  color: #ddd;
+  font-size: 12px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.node-field:focus {
+  outline: none;
+  border-color: #6b6baf;
+}
+
+.node-preview-area {
+  min-height: 40px;
+  border: 1px dashed #2a2a4a;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.preview-placeholder {
+  font-size: 11px;
+  color: #555;
+}
+
+/* ---- React Flow Overrides ---- */
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  border: 2px solid #6b6baf;
+  background: #1a1a30;
+}
+
+.react-flow__handle:hover {
+  background: #6b6baf;
+}
+
+.react-flow__edge-path {
+  stroke: #6b6baf;
+  stroke-width: 2;
+}
+
+.react-flow__minimap {
+  border-radius: 6px;
+  border: 1px solid #2a2a4a;
+}
+
+.react-flow__controls {
+  border-radius: 6px;
+  border: 1px solid #2a2a4a;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: #1e1e38;
+  border-bottom: 1px solid #2a2a4a;
+  fill: #999;
+}
+
+.react-flow__controls-button:hover {
+  background: #2a2a50;
+}
