@@ -1,0 +1,57 @@
+# XcodeGen spec — run `xcodegen generate` (or ./run.sh) to create IslandTranslator.xcodeproj
+name: IslandTranslator
+options:
+  # Change this to something unique to you before running on a real iPhone.
+  bundleIdPrefix: dev.lab
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""   # set your Apple ID team here (or in Xcode) for device builds
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  IslandTranslator:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: Shared
+    dependencies:
+      - target: IslandTranslatorWidget
+        embed: true
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Island Translator
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSSupportsLiveActivities: true
+        NSSupportsLiveActivitiesFrequentUpdates: true
+        CFBundleURLTypes:
+          - CFBundleURLName: islandtranslator
+            CFBundleURLSchemes: [islandtranslator]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.lab.islandtranslator
+    scheme: {}
+  IslandTranslatorWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widget
+      - path: Shared
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Island Translator
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.lab.islandtranslator.widget
+        SKIP_INSTALL: YES
