@@ -53,7 +53,7 @@ struct ScreenResult {
 }
 
 enum ScreenError: LocalizedError {
-    case badImage, noText, noAPIKey, photosDenied, noScreenshot
+    case badImage, noText, noAPIKey, photosDenied, noScreenshot, notSharing
     case api(String)
 
     var errorDescription: String? {
@@ -63,6 +63,7 @@ enum ScreenError: LocalizedError {
         case .noAPIKey: return "Add your Anthropic API key in the Screen tab to use the Claude reader."
         case .photosDenied: return "Allow Photos access to grab your latest screenshot."
         case .noScreenshot: return "No screenshots found in your library."
+        case .notSharing: return "Screen sharing is off. Open Island Translator and tap Start."
         case .api(let message): return message
         }
     }

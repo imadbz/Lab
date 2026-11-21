@@ -33,7 +33,7 @@ private struct TranslationJob {
 final class LabModel: ObservableObject {
     static let shared = LabModel()
 
-    @Published var tab: LabTab = .translate
+    @Published var tab: LabTab = .screen // the zero-setup screen reader is the way in
     // Persisted so a Shortcut running in the background (fresh process) sees the same settings.
     @Published var chatName = UserDefaults.standard.string(forKey: "chatName") ?? "Sofía" {
         didSet { UserDefaults.standard.set(chatName, forKey: "chatName") }
@@ -222,6 +222,40 @@ final class LabModel: ObservableObject {
             } catch {
                 screenError = error.localizedDescription
             }
+        }
+    }
+
+    // MARK: Live screen
+
+    /// "Start" in the app: put the island up now, while the app is in front (iOS starts
+    /// Live Activities only from the foreground), so its "Translate screen" button is there later.
+    func prepareScreenIsland() async {
+        guard island.current == nil else { return }
+        let waiting = TranslatorAttributes.ContentState(
+            original: "Screen sharing", translated: "In any chat, hold the island and tap Translate",
+            sourceLang: theirLang, targetLang: myLang,
+            incoming: true, unread: 0, updatedAt: Date(), lab: lab
+        )
+        await push(waiting, alert: false)
+    }
+
+    /// The island's "Translate screen" button. Runs in the app, often launched in the background for it.
+    func translateLiveScreen() async {
+        do {
+            guard let jpeg = ScreenShare.latestFrame(), let image = UIImage(data: jpeg) else {
+                throw ScreenError.notSharing
+            }
+            _ = try await readScreen(image, mode: readerMode)
+        } catch {
+            log("Translate screen failed: \(error.localizedDescription)")
+            // The island is the only place the person is looking, so the reason goes there.
+            guard var state = island.current?.content.state ?? lastState else { return }
+            state.original = "Couldn't translate the screen"
+            state.translated = error.localizedDescription
+            state.note = ""
+            state.replies = []
+            state.updatedAt = Date()
+            await push(state, alert: false)
         }
     }
 

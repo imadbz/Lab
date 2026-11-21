@@ -24,6 +24,14 @@ targets:
     dependencies:
       - target: IslandTranslatorWidget
         embed: true
+      - target: IslandTranslatorBroadcast
+        embed: true
+    entitlements:
+      path: App/IslandTranslator.entitlements
+      properties:
+        # Shared folder with the screen broadcast extension (Shared/ScreenShare.swift).
+        # On a real iPhone with your own team, change this here and in ScreenShare.group.
+        com.apple.security.application-groups: [group.dev.lab.islandtranslator]
     info:
       path: App/Info.plist
       properties:
@@ -39,6 +47,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.lab.islandtranslator
+        # Island buttons are compiled into the widget too, but their perform() runs only in the app.
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) ISLAND_APP
     scheme: {}
   IslandTranslatorWidget:
     type: app-extension
@@ -55,4 +65,27 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.lab.islandtranslator.widget
+        SKIP_INSTALL: YES
+  IslandTranslatorBroadcast:
+    # Screen broadcast extension: keeps a recent frame of whatever is on screen for "Translate screen".
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Broadcast
+      - path: Shared/ScreenShare.swift
+    entitlements:
+      path: Broadcast/IslandTranslatorBroadcast.entitlements
+      properties:
+        com.apple.security.application-groups: [group.dev.lab.islandtranslator]
+    info:
+      path: Broadcast/Info.plist
+      properties:
+        CFBundleDisplayName: Island Translator
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.broadcast-services-upload
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler
+          RPBroadcastProcessMode: RPBroadcastProcessModeSampleBuffer
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.lab.islandtranslator.broadcast
         SKIP_INSTALL: YES

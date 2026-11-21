@@ -10,6 +10,8 @@ struct ScreenView: View {
     var body: some View {
         NavigationStack {
             Form {
+                ScreenShareSection()
+
                 Section {
                     Picker("Reader", selection: $model.readerMode) {
                         ForEach(ReaderMode.allCases) { Text($0.label).tag($0) }

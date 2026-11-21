@@ -143,6 +143,9 @@ struct ReplyChips: View {
 
     var body: some View {
         HStack(spacing: 6) {
+            Button(intent: TranslateScreenIntent()) {
+                Image(systemName: "text.viewfinder")
+            }
             ForEach(Array(replies.prefix(2).enumerated()), id: \.offset) { index, reply in
                 Button(intent: CopyReplyIntent(index: index)) {
                     Text(reply.text).lineLimit(1)
@@ -162,15 +165,22 @@ struct ReplyChips: View {
 struct IslandButtons: View {
     var body: some View {
         HStack(spacing: 8) {
-            Button(intent: CopyTranslationIntent()) {
-                Label("Copy", systemImage: "doc.on.doc")
+            // The main action: read whatever chat is on screen now (needs screen sharing on, see ScreenShare).
+            Button(intent: TranslateScreenIntent()) {
+                Label("Translate", systemImage: "text.viewfinder")
             }
-            Button(intent: FlipIntent()) {
-                Label("Flip", systemImage: "arrow.left.arrow.right")
+            Group {
+                Button(intent: CopyTranslationIntent()) {
+                    Label("Copy", systemImage: "doc.on.doc")
+                }
+                Button(intent: FlipIntent()) {
+                    Label("Flip", systemImage: "arrow.left.arrow.right")
+                }
+                Link(destination: URL(string: "islandtranslator://reply")!) {
+                    Label("Reply", systemImage: "arrowshape.turn.up.left")
+                }
             }
-            Link(destination: URL(string: "islandtranslator://reply")!) {
-                Label("Reply", systemImage: "arrowshape.turn.up.left")
-            }
+            .labelStyle(.iconOnly)
             Spacer(minLength: 0)
             Button(intent: EndIslandIntent()) {
                 Image(systemName: "xmark")

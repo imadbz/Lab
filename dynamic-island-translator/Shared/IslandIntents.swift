@@ -6,6 +6,20 @@ import UIKit
 // LiveActivityIntent.perform() runs in the APP's process (launched in the background if needed),
 // so it can touch the pasteboard and ActivityKit without opening the app.
 
+/// "Translate screen": reads the frame the screen broadcast extension keeps, finds the latest
+/// message from them and shows it translated. The widget only needs the type to draw the button;
+/// perform() always runs in the app, which is the only target built with ISLAND_APP.
+struct TranslateScreenIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "Translate screen"
+
+    func perform() async throws -> some IntentResult {
+        #if ISLAND_APP
+        await LabModel.shared.translateLiveScreen()
+        #endif
+        return .result()
+    }
+}
+
 struct CopyTranslationIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Copy translation"
 
