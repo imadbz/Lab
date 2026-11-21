@@ -23,6 +23,9 @@ struct ContentView: View {
             TranslateView()
                 .tabItem { Label("Translate", systemImage: "character.bubble") }
                 .tag(LabTab.translate)
+            ScreenView()
+                .tabItem { Label("Screen", systemImage: "camera.viewfinder") }
+                .tag(LabTab.screen)
             FitLabView()
                 .tabItem { Label("Fit Lab", systemImage: "ruler") }
                 .tag(LabTab.fit)

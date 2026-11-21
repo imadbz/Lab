@@ -110,7 +110,13 @@ struct ExpandedBottom: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if state.lab.showOriginal {
+            if !state.note.isEmpty {
+                // AI flow: the nuance beats the original text for the one spare line.
+                Label(state.note, systemImage: "lightbulb")
+                    .font(.caption)
+                    .foregroundStyle(.yellow)
+                    .lineLimit(1)
+            } else if state.lab.showOriginal {
                 Text(state.original)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -118,11 +124,38 @@ struct ExpandedBottom: View {
             }
             Text(state.translated)
                 .font(.body.weight(.semibold))
-                .lineLimit(state.lab.lineLimit)
+                // Leave room for the reply chips when there are any (expanded height tops out ~160 pt).
+                .lineLimit(state.replies.isEmpty ? state.lab.lineLimit : min(state.lab.lineLimit, 2))
                 .minimumScaleFactor(state.lab.shrinkToFit ? 0.6 : 1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            IslandButtons()
+            if state.replies.isEmpty {
+                IslandButtons()
+            } else {
+                ReplyChips(replies: state.replies)
+            }
         }
+    }
+}
+
+/// Tap a chip → that reply (in their language) is on the clipboard, ready to paste into the chat.
+struct ReplyChips: View {
+    let replies: [SuggestedReply]
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(Array(replies.prefix(2).enumerated()), id: \.offset) { index, reply in
+                Button(intent: CopyReplyIntent(index: index)) {
+                    Text(reply.text).lineLimit(1)
+                }
+            }
+            Spacer(minLength: 0)
+            Button(intent: EndIslandIntent()) {
+                Image(systemName: "xmark")
+            }
+        }
+        .font(.caption.weight(.semibold))
+        .buttonStyle(.bordered)
+        .tint(.cyan)
     }
 }
 
@@ -175,7 +208,27 @@ struct LockScreenView: View {
                 .font(.headline)
                 .lineLimit(context.state.lab.lineLimit)
                 .minimumScaleFactor(context.state.lab.shrinkToFit ? 0.6 : 1)
-            IslandButtons()
+            if !context.state.note.isEmpty {
+                Label(context.state.note, systemImage: "lightbulb")
+                    .font(.caption)
+                    .foregroundStyle(.yellow)
+                    .lineLimit(2)
+            }
+            if context.state.replies.isEmpty {
+                IslandButtons()
+            } else {
+                ForEach(Array(context.state.replies.prefix(3).enumerated()), id: \.offset) { index, reply in
+                    Button(intent: CopyReplyIntent(index: index)) {
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(reply.text).font(.caption.weight(.semibold))
+                            Text(reply.meaning).font(.caption2).foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.cyan)
+                }
+            }
         }
         .padding()
     }

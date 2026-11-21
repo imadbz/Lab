@@ -45,3 +45,27 @@ struct EndIslandIntent: LiveActivityIntent {
         return .result()
     }
 }
+
+/// Copies one of the AI-suggested replies (already in their language) so you can paste it into the chat.
+struct CopyReplyIntent: LiveActivityIntent {
+    static let title: LocalizedStringResource = "Copy suggested reply"
+
+    @Parameter(title: "Reply number")
+    var index: Int
+
+    init() {}
+
+    init(index: Int) {
+        self.index = index
+    }
+
+    func perform() async throws -> some IntentResult {
+        if let activity = Activity<TranslatorAttributes>.activities.first {
+            let replies = activity.content.state.replies
+            if replies.indices.contains(index) {
+                UIPasteboard.general.string = replies[index].text
+            }
+        }
+        return .result()
+    }
+}

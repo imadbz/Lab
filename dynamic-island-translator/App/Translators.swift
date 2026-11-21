@@ -2,6 +2,7 @@ import Foundation
 
 enum Engine: String, CaseIterable, Identifiable {
     case apple = "Apple on-device"
+    case claude = "Claude AI"
     case mock = "Mock phrasebook"
 
     var id: String { rawValue }

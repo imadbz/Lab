@@ -15,10 +15,19 @@ struct TranslatorAttributes: ActivityAttributes {
         var unread: Int
         var updatedAt: Date
         var lab: LabOptions
+        /// From the AI screenshot flow: replies in THEIR language you can copy straight from the island.
+        var replies: [SuggestedReply] = []
+        /// From the AI flow: slang / tone / cultural nuance a literal translation would miss.
+        var note: String = ""
     }
 
     /// Fixed for the lifetime of the activity.
     var chatName: String
+}
+
+struct SuggestedReply: Codable, Hashable {
+    var text: String     // in their language — what you paste into the chat
+    var meaning: String  // in your language — so you know what you're sending
 }
 
 /// Layout knobs you can twiddle live from the Fit Lab tab.
@@ -61,9 +70,12 @@ enum Lang {
 
     private static let flags: [String: String] = [
         "en": "🇬🇧", "es": "🇪🇸", "fr": "🇫🇷", "de": "🇩🇪", "it": "🇮🇹", "pt": "🇧🇷",
-        "ja": "🇯🇵", "ko": "🇰🇷", "zh-Hans": "🇨🇳", "ar": "🇸🇦", "ru": "🇷🇺", "tr": "🇹🇷", "hi": "🇮🇳",
+        "ja": "🇯🇵", "ko": "🇰🇷", "zh-Hans": "🇨🇳", "zh": "🇨🇳", "ar": "🇸🇦", "ru": "🇷🇺", "tr": "🇹🇷", "hi": "🇮🇳",
     ]
 
-    static func flag(_ code: String) -> String { flags[code] ?? "🌐" }
+    /// Accepts "es", "es-MX", "zh-Hans" … (the AI flow returns BCP-47 codes).
+    static func flag(_ code: String) -> String {
+        flags[code] ?? flags[String(code.split(separator: "-").first ?? "")] ?? "🌐"
+    }
     static func short(_ code: String) -> String { String(code.prefix(2)).uppercased() }
 }
