@@ -4,3 +4,5 @@ App/Info.plist
 Widget/Info.plist
 # Build output from run.sh
 build/
+# Simulator screenshots from test runs
+shots/

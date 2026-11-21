@@ -4,7 +4,13 @@ An experiment to find out **how much a chat translator can do from the Dynamic I
 
 It's a small iOS app plus a Live Activity widget. iOS won't let an app read another app's chats, so **the input is a screenshot**: you take one inside WhatsApp (one press of the Action button), and the latest incoming message shows up translated in the island. With the AI reader you also get a tone note and replies you can copy with one tap.
 
-> **Status:** written without a Mac, so it hasn't been compiled yet, and the Claude request hasn't been sent for real. Expect the first build to need a small fix or two. Paste any Xcode errors back to Claude.
+> **Status (2026-11-21):** builds with no errors or warnings on Xcode 27.2 and runs in the iPhone 18 Pro simulator (iOS 27.2). Verified there: the 4 tabs, the demo conversation (compact island with flag and unread badge, alert pops it open), Fit Lab pushes, and the on-device screenshot reader (Vision OCR with the mock translation engine). **Not verified yet:** the Claude reader (no request sent), Apple Translation, haptics, the Action button and background Shortcut runs, all of which need a real iPhone or an API key.
+
+### Simulator notes
+
+- Xcode 27 has no Simulator.app, so `./run.sh` runs the simulator without a window. Drive it with `xcrun simctl` or Xcode's device window.
+- The expanded island fits the header, one line of original text, **one** line of translation and the button row. With *Shrink text to fit* on, longer text shrinks onto that one line and then truncates: the 146-character *Long message* showed 63 characters, the 36-character *Japanese* sample 34. Letting the text wrap to *Max lines* pushes the buttons out of the island.
+- *Use my latest screenshot* only finds images Photos tags as screenshots. A PNG added with `simctl addmedia` gets that tag only if it carries the XMP `exif:UserComment` "Screenshot" that real iPhone screenshots have (EXIF alone wasn't enough).
 
 ## Run it (Mac)
 
