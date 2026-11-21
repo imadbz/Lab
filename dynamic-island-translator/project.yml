@@ -26,6 +26,11 @@ targets:
         embed: true
       - target: IslandTranslatorBroadcast
         embed: true
+    attributes:
+      # Lets Xcode's automatic signing turn on App Groups for the app ID.
+      SystemCapabilities:
+        com.apple.ApplicationGroups.iOS:
+          enabled: 1
     entitlements:
       path: App/IslandTranslator.entitlements
       properties:
@@ -73,6 +78,11 @@ targets:
     sources:
       - path: Broadcast
       - path: Shared/ScreenShare.swift
+    attributes:
+      # Lets Xcode's automatic signing turn on App Groups for the app ID.
+      SystemCapabilities:
+        com.apple.ApplicationGroups.iOS:
+          enabled: 1
     entitlements:
       path: Broadcast/IslandTranslatorBroadcast.entitlements
       properties:

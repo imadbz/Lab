@@ -8,7 +8,8 @@ It's a small iOS app plus a Live Activity widget. It reads **what's on your scre
 
 ### Simulator notes
 
-- To test **Translate** without a device, write a frame the way the broadcast extension would: `cp chat.jpg "$(xcrun simctl get_app_container booted dev.lab.islandtranslator group.dev.lab.islandtranslator)/frame.jpg"`. Frames older than 10 s count as sharing off, so `touch` it right before tapping.
+- The Simulator can't share its screen, so run `./sim-screen-share.sh` beside it: it copies the simulator's screen into the app's App Group folder every half second, as the broadcast extension does on a phone. Then Start in the app, open any chat (Messages works), hold the island and tap **Translate**. Frames older than 10 s count as sharing off.
+- In the Simulator the translation engine is the mock phrasebook (it tags unknown text like `[FR→EN]`); Apple Translation needs a real iPhone, Claude needs an API key. The on-device reader detects their language from the message (NaturalLanguage), so the *They speak* setting is only a fallback.
 - Xcode 27 has no Simulator.app, so `./run.sh` runs the simulator without a window. Drive it with `xcrun simctl` or Xcode's device window.
 - The expanded island is about 370 x 160 pt: a row beside the camera, a strip under it and the bottom region. With Copy and **Translate** beside the camera, the bottom region holds three lines of message: the whole 146-character *Long message* fits. Before (2026-11-21, a button row at the bottom and the original above), it held one line: 63 of those 146 characters, 34 of the 36 *Japanese*.
 - With the Claude reader's result, the tone note takes the strip under the camera (its first few words show; the Lock Screen has all of it), the message gets two lines and two reply chips fit whole. Three chips cut each reply to about ten characters. Fit Lab's *AI result* sample shows this without an API key.

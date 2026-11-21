@@ -1,5 +1,6 @@
 import ActivityKit
 import Foundation
+import NaturalLanguage
 import SwiftUI
 import Translation
 import UIKit
@@ -298,11 +299,13 @@ final class LabModel: ObservableObject {
             guard let latest = messages.last(where: { $0.speaker == .them }) ?? messages.last else {
                 throw ScreenError.noText
             }
-            let translated = await translateText(latest.text, from: theirLang, to: myLang)
+            // Their language comes from the message itself; the setting is only the fallback.
+            let src = Self.languageOf(latest.text) ?? theirLang
+            let translated = await translateText(latest.text, from: src, to: myLang)
             result = ScreenResult(
                 mode: .onDevice, messages: messages,
                 latestOriginal: latest.text, latestTranslation: translated,
-                theirLang: theirLang, contact: nil, note: "", replies: [],
+                theirLang: src, contact: nil, note: "", replies: [],
                 thumbnail: ScreenImages.thumbnail(image)
             )
         }
@@ -314,6 +317,15 @@ final class LabModel: ObservableObject {
                       src: result.theirLang, tgt: myLang, incoming: true,
                       chat: result.contact, replies: result.replies, note: result.note)
         return result
+    }
+
+    /// The language a message is written in, when the guess is reasonably sure (BCP-47 code, e.g. "fr").
+    static func languageOf(_ text: String) -> String? {
+        let recognizer = NLLanguageRecognizer()
+        recognizer.processString(text)
+        guard let (language, confidence) = recognizer.languageHypotheses(withMaximum: 1).first,
+              confidence >= 0.5 else { return nil }
+        return language.rawValue
     }
 
     // MARK: Island
