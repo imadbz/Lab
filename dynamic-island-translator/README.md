@@ -2,12 +2,13 @@
 
 An experiment to find out **how much a chat translator can do from the Dynamic Island** — how much text fits, what's interactive, and what iOS won't let you do.
 
-It's a small iOS app plus a Live Activity widget. iOS won't let an app read another app's chats, so **the input is a screenshot**: you take one inside WhatsApp (one press of the Action button), and the latest incoming message shows up translated in the island. With the AI reader you also get a tone note and replies you can copy with one tap.
+It's a small iOS app plus a Live Activity widget. It reads **what's on your screen**: tap **Start** in the app once, confirm the system's screen sharing sheet, then in any chat app hold the island and tap **Translate**. The latest message from them shows up translated in the island. Nothing else to set up (see PRODUCT.md). With the AI reader you also get a tone note and replies you can copy with one tap. A screenshot Shortcut on the Action button still works as an extra.
 
-> **Status (2026-11-21):** builds with no errors or warnings on Xcode 27.2 and runs in the iPhone 18 Pro simulator (iOS 27.2). Verified there: the 4 tabs, the demo conversation (compact island with flag and unread badge, alert pops it open), Fit Lab pushes, and the on-device screenshot reader (Vision OCR with the mock translation engine). **Not verified yet:** the Claude reader (no request sent), Apple Translation, haptics, the Action button and background Shortcut runs, all of which need a real iPhone or an API key.
+> **Status (2026-11-21):** builds with no errors or warnings on Xcode 27.2 and runs in the iPhone 18 Pro simulator (iOS 27.2). Verified there: the island's **Translate** button reading a screen frame and showing the latest message (about 1.7 s on-device, app not opened) and saying when sharing is off, the 4 tabs, the demo conversation (compact island with flag and unread badge, alert pops it open), Fit Lab pushes, and the on-device screenshot reader (Vision OCR with the mock translation engine). **Not verified yet:** the screen broadcast itself (the Simulator can't share its screen, so the test wrote the frame by hand), the Claude reader (no request sent), Apple Translation, haptics, the Action button and background Shortcut runs, all of which need a real iPhone or an API key.
 
 ### Simulator notes
 
+- To test **Translate** without a device, write a frame the way the broadcast extension would: `cp chat.jpg "$(xcrun simctl get_app_container booted dev.lab.islandtranslator group.dev.lab.islandtranslator)/frame.jpg"`. Frames older than 10 s count as sharing off, so `touch` it right before tapping.
 - Xcode 27 has no Simulator.app, so `./run.sh` runs the simulator without a window. Drive it with `xcrun simctl` or Xcode's device window.
 - The expanded island fits the header, one line of original text, **one** line of translation and the button row. With *Shrink text to fit* on, longer text shrinks onto that one line and then truncates: the 146-character *Long message* showed 63 characters, the 36-character *Japanese* sample 34. Letting the text wrap to *Max lines* pushes the buttons out of the island.
 - *Use my latest screenshot* only finds images Photos tags as screenshots. A PNG added with `simctl addmedia` gets that tag only if it carries the XMP `exif:UserComment` "Screenshot" that real iPhone screenshots have (EXIF alone wasn't enough).
@@ -25,8 +26,8 @@ cd dynamic-island-translator
 **On a real iPhone** (needed for real translation and haptics):
 
 1. Run `./run.sh --open`.
-2. In Xcode, select the **IslandTranslator** target and the **IslandTranslatorWidget** target. On each, open *Signing & Capabilities* and pick your team (a free Apple ID works).
-3. If Xcode complains the bundle ID is taken, change `dev.lab` in `project.yml` to something of yours and run `./run.sh --open` again.
+2. In Xcode, select the **IslandTranslator**, **IslandTranslatorWidget** and **IslandTranslatorBroadcast** targets. On each, open *Signing & Capabilities* and pick your team (a free Apple ID works).
+3. If Xcode complains the bundle ID or App Group is taken, change `dev.lab` in `project.yml` (bundle IDs and `group.dev.lab.islandtranslator`), `ScreenShare.group` in `Shared/ScreenShare.swift` and `BroadcastPicker.extensionID` in `App/ScreenShareSection.swift` to something of yours, then run `./run.sh --open` again.
 4. Plug in your iPhone (14 Pro or newer) and press Run.
 
 ## What's inside
@@ -36,6 +37,7 @@ cd dynamic-island-translator
 | Live Activity UI | `Widget/TranslatorLiveActivity.swift` | Compact, minimal, expanded and Lock Screen layouts |
 | Island buttons | `Shared/IslandIntents.swift` | **Copy**, **Flip**, **End** and **reply chips** work without opening the app. **Reply** deep-links into the app |
 | Activity control | `App/LiveActivityManager.swift` | Start, update, *alert* update (pops the island open), end |
+| **Screen sharing** | `Broadcast/SampleHandler.swift`, `Shared/ScreenShare.swift`, `App/ScreenShareSection.swift` | A ReplayKit broadcast extension keeps a frame from about a second ago in the App Group folder; the island's **Translate** button (`TranslateScreenIntent`) wakes the app, which reads it |
 | **Screenshot readers** | `App/ScreenReading.swift` | On-device: Vision OCR, then them/me guessed from bubble margins, then translation |
 | **Claude reader** | `App/ClaudeClient.swift` | One API call (structured output): whole chat translated, a tone/slang note, 2–3 suggested replies in their language |
 | **Shortcut action** | `App/ScreenIntents.swift` | "Translate Screenshot". Chain it after "Take Screenshot" and put it on the Action button |
@@ -107,6 +109,6 @@ Write down what you see. That's the point of this folder.
 
 - **Keyboard extension:** type in your language and the keyboard inserts the translation into any chat app. This is the outgoing half of the product.
 - **Push updates via APNs:** a server (or the keyboard) sends the translation, and the island updates without the app running.
-- **Screen-recording / broadcast extension:** live OCR of the chat without taking screenshots. Heavier and more intrusive, but it's the only way to make translation continuous.
+- **Automatic translation while sharing:** the broadcast extension already sees every frame, but iOS won't let it update the island, and the app is suspended. An APNs server (the extension tells it, the server pushes the Live Activity update) would make it continuous.
 - **Reply in your language:** type in English in the island-launched reply screen, and Claude rewrites it in their language in the right register.
 - **Speak button:** read the translation aloud for in-person conversations.
