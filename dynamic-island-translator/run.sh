@@ -39,7 +39,8 @@ UDID="${PICK%%|*}"; NAME="${PICK#*|}"
 echo "→ Using simulator: $NAME"
 
 xcrun simctl boot "$UDID" 2>/dev/null || true
-open -a Simulator
+# Xcode 27 ships no Simulator.app; the device runs without a window then.
+open -a Simulator 2>/dev/null || echo "→ No Simulator app found; the simulator runs without a window."
 
 echo "→ Building…"
 xcodebuild -project IslandTranslator.xcodeproj -scheme IslandTranslator \
