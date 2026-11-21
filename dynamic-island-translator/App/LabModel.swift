@@ -72,6 +72,12 @@ final class LabModel: ObservableObject {
     private var demoTask: Task<Void, Never>?
     private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     private let island = LiveActivityManager()
+    private let keepAlive = KeepAlive()
+    private var autoTask: Task<Void, Never>?
+    private var lastAutoSignature: [UInt8]?
+    private var lastAutoText: String?
+    private var lastActiveAt = Date()
+    @Published var autoTranslating = false
 
     private var key: String { apiKey.trimmingCharacters(in: .whitespacesAndNewlines) }
 
@@ -233,7 +239,7 @@ final class LabModel: ObservableObject {
     func prepareScreenIsland() async {
         guard island.current == nil else { return }
         let waiting = TranslatorAttributes.ContentState(
-            original: "Screen sharing", translated: "In any chat, hold the island and tap Translate",
+            original: "Screen sharing", translated: "Watching for new messages",
             sourceLang: theirLang, targetLang: myLang,
             incoming: true, unread: 0, updatedAt: Date(), lab: lab
         )
@@ -263,6 +269,86 @@ final class LabModel: ObservableObject {
             state.replies = []
             state.updatedAt = Date()
             await push(state, alert: false)
+        }
+    }
+
+    // MARK: Auto-translate
+
+    /// While screen sharing is on, translate each new message from them without a tap.
+    /// The app stays running in the background (KeepAlive) and checks the latest frame every
+    /// 1.5 s; it runs OCR only when the picture changed, and updates the island only when the
+    /// latest message from them is a new one. It stops by itself 60 s after frames stop coming.
+    func startAutoTranslate() {
+        guard autoTask == nil else { return }
+        keepAlive.start()
+        autoTranslating = true
+        lastAutoSignature = nil
+        lastAutoText = nil
+        log("Auto-translate on")
+        autoTask = Task { [weak self] in
+            var quietSince: Date?
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1.5))
+                guard let self else { return }
+                if let jpeg = ScreenShare.latestFrame(), let image = UIImage(data: jpeg) {
+                    quietSince = nil
+                    await self.autoCheck(image)
+                } else {
+                    let since = quietSince ?? Date()
+                    quietSince = since
+                    if Date().timeIntervalSince(since) > 60 { break }
+                }
+            }
+            self?.stopAutoTranslate()
+        }
+    }
+
+    /// Opening the app while frames are arriving (sharing is on) brings the island and
+    /// auto-translate back, e.g. after iOS ended the activity or auto-translate timed out.
+    func resumeScreenReading() async {
+        guard ScreenShare.isSharing else { return }
+        await prepareScreenIsland()
+        startAutoTranslate()
+    }
+
+    func stopAutoTranslate() {
+        autoTask?.cancel()
+        autoTask = nil
+        keepAlive.stop()
+        if autoTranslating { log("Auto-translate off") }
+        autoTranslating = false
+    }
+
+    private func autoCheck(_ image: UIImage) async {
+        // While this app is in front, the frame is this app; there's no chat to read. Frames lag
+        // about a second, so the first ones after leaving the app still show it: skip those too.
+        if UIApplication.shared.applicationState == .active {
+            lastActiveAt = Date()
+            lastAutoSignature = nil
+            return
+        }
+        guard Date().timeIntervalSince(lastActiveAt) > 3 else { return }
+        guard let cgImage = image.cgImage else { return }
+        let signature = ScreenChange.signature(cgImage)
+        if let last = lastAutoSignature, ScreenChange.difference(last, signature) < 0.004 { return }
+        lastAutoSignature = signature
+
+        guard let messages = try? await ScreenOCR.messages(in: image),
+              let latest = messages.last(where: { $0.speaker == .them }) else { return }
+        let text = latest.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, text != lastAutoText else { return }
+        lastAutoText = text
+
+        switch readerMode {
+        case .claude:
+            // OCR found a new message; only now is it worth a Claude call on the whole screen.
+            _ = try? await readScreen(image, mode: .claude)
+        case .onDevice:
+            let src = Self.languageOf(text) ?? theirLang
+            guard src != myLang else { return } // already in my language
+            let translated = await translateText(text, from: src, to: myLang)
+            log("Auto-translated a new message")
+            await deliver(original: text, translated: translated, src: src, tgt: myLang, incoming: true)
         }
     }
 

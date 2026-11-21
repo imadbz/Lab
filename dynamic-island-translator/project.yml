@@ -45,6 +45,8 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSSupportsLiveActivities: true
         NSSupportsLiveActivitiesFrequentUpdates: true
+        # Auto-translate keeps the app running while screen sharing is on (App/AutoTranslate.swift).
+        UIBackgroundModes: [audio]
         NSPhotoLibraryUsageDescription: Reads your latest screenshot so it can translate the chat in it.
         CFBundleURLTypes:
           - CFBundleURLName: islandtranslator

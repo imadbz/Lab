@@ -38,7 +38,10 @@ struct ContentView: View {
         }
         .onOpenURL { model.handle(url: $0) }
         .onChange(of: scenePhase) {
-            if scenePhase == .active { model.syncFromIsland() }
+            if scenePhase == .active {
+                model.syncFromIsland()
+                Task { await model.resumeScreenReading() }
+            }
         }
     }
 }

@@ -17,7 +17,10 @@ struct ScreenShareSection: View {
                     Spacer()
                     Button(sharing ? "Stop" : "Start") {
                         Task {
-                            if !sharing { await model.prepareScreenIsland() }
+                            if !sharing {
+                                await model.prepareScreenIsland()
+                                model.startAutoTranslate()
+                            }
                             picker.open()
                         }
                     }
@@ -34,7 +37,7 @@ struct ScreenShareSection: View {
         } header: {
             Text("Read my screen")
         } footer: {
-            Text("Tap Start and confirm. Then, in any chat app, hold the island and tap **Translate**. iOS shows a red indicator while your screen is shared; tap it or Stop to end.")
+            Text("Tap Start and confirm. Then open any chat: each new message from them shows up translated in the island. **Translate** on the island reads the screen again on demand. iOS shows a red indicator while your screen is shared; tap it or Stop to end.")
         }
     }
 }
