@@ -10,7 +10,9 @@ It's a small iOS app plus a Live Activity widget. It reads **what's on your scre
 
 - To test **Translate** without a device, write a frame the way the broadcast extension would: `cp chat.jpg "$(xcrun simctl get_app_container booted dev.lab.islandtranslator group.dev.lab.islandtranslator)/frame.jpg"`. Frames older than 10 s count as sharing off, so `touch` it right before tapping.
 - Xcode 27 has no Simulator.app, so `./run.sh` runs the simulator without a window. Drive it with `xcrun simctl` or Xcode's device window.
-- The expanded island fits the header, one line of original text, **one** line of translation and the button row. With *Shrink text to fit* on, longer text shrinks onto that one line and then truncates: the 146-character *Long message* showed 63 characters, the 36-character *Japanese* sample 34. Letting the text wrap to *Max lines* pushes the buttons out of the island.
+- The expanded island is about 370 x 160 pt: a row beside the camera, a strip under it and the bottom region. With Copy and **Translate** beside the camera, the bottom region holds three lines of message: the whole 146-character *Long message* fits. Before (2026-11-21, a button row at the bottom and the original above), it held one line: 63 of those 146 characters, 34 of the 36 *Japanese*.
+- With the Claude reader's result, the tone note takes the strip under the camera (its first few words show; the Lock Screen has all of it), the message gets two lines and two reply chips fit whole. Three chips cut each reply to about ten characters. Fit Lab's *AI result* sample shows this without an API key.
+- Tap the message in the expanded island to swap it with the original; tap anywhere else to reply. End is on the Lock Screen view.
 - *Use my latest screenshot* only finds images Photos tags as screenshots. A PNG added with `simctl addmedia` gets that tag only if it carries the XMP `exif:UserComment` "Screenshot" that real iPhone screenshots have (EXIF alone wasn't enough).
 
 ## Run it (Mac)
@@ -35,7 +37,7 @@ cd dynamic-island-translator
 | Piece | File | What it explores |
 |---|---|---|
 | Live Activity UI | `Widget/TranslatorLiveActivity.swift` | Compact, minimal, expanded and Lock Screen layouts |
-| Island buttons | `Shared/IslandIntents.swift` | **Copy**, **Flip**, **End** and **reply chips** work without opening the app. **Reply** deep-links into the app |
+| Island buttons | `Shared/IslandIntents.swift` | **Translate**, **Copy**, **Flip** (tap the message), **reply chips** and **End** (Lock Screen) work without opening the app. A tap elsewhere on the island opens the reply composer |
 | Activity control | `App/LiveActivityManager.swift` | Start, update, *alert* update (pops the island open), end |
 | **Screen sharing** | `Broadcast/SampleHandler.swift`, `Shared/ScreenShare.swift`, `App/ScreenShareSection.swift` | A ReplayKit broadcast extension keeps a frame from about a second ago in the App Group folder; the island's **Translate** button (`TranslateScreenIntent`) wakes the app, which reads it |
 | **Screenshot readers** | `App/ScreenReading.swift` | On-device: Vision OCR, then them/me guessed from bubble margins, then translation |
