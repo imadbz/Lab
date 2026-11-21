@@ -242,14 +242,20 @@ final class LabModel: ObservableObject {
     /// The island's "Translate screen" button. Runs in the app, often launched in the background for it.
     func translateLiveScreen() async {
         do {
+            // Take the frame first: it's from about a second ago, before the island opened over the chat.
             guard let jpeg = ScreenShare.latestFrame(), let image = UIImage(data: jpeg) else {
                 throw ScreenError.notSharing
+            }
+            if var reading = island.current?.content.state ?? lastState {
+                reading.busy = true
+                await push(reading, alert: false)
             }
             _ = try await readScreen(image, mode: readerMode)
         } catch {
             log("Translate screen failed: \(error.localizedDescription)")
             // The island is the only place the person is looking, so the reason goes there.
             guard var state = island.current?.content.state ?? lastState else { return }
+            state.busy = false
             state.original = "Couldn't translate the screen"
             state.translated = error.localizedDescription
             state.note = ""
@@ -328,6 +334,23 @@ final class LabModel: ObservableObject {
             original: "Fit test · \(text.count) chars", translated: text,
             sourceLang: theirLang, targetLang: lang,
             incoming: true, unread: 1, updatedAt: Date(), lab: lab
+        )
+        Task { await push(state, alert: popWithAlert) }
+    }
+
+    /// What the Claude reader's result looks like in the island (note + reply chips), without an API key.
+    func pushAIFitTest() {
+        let state = TranslatorAttributes.ContentState(
+            original: "Vale. Ah, ¿puedes traerme el cargador que te dejé? El mío se murió anoche.",
+            translated: "OK. Oh, can you bring me the charger I left with you? Mine died last night.",
+            sourceLang: "es", targetLang: myLang,
+            incoming: true, unread: 1, updatedAt: Date(), lab: lab,
+            replies: [
+                SuggestedReply(text: "¡Claro, lo llevo!", meaning: "Sure, I'll bring it!"),
+                SuggestedReply(text: "¿Cuál cargador?", meaning: "Which charger?"),
+                SuggestedReply(text: "Ya lo tengo 👍", meaning: "Got it already"),
+            ],
+            note: "Casual and friendly; \"se murió\" means the battery died."
         )
         Task { await push(state, alert: popWithAlert) }
     }

@@ -19,6 +19,8 @@ struct TranslatorAttributes: ActivityAttributes {
         var replies: [SuggestedReply] = []
         /// From the AI flow: slang / tone / cultural nuance a literal translation would miss.
         var note: String = ""
+        /// "Translate" was tapped and the screen is being read.
+        var busy: Bool = false
     }
 
     /// Fixed for the lifetime of the activity.
@@ -41,7 +43,7 @@ struct LabOptions: Codable, Hashable {
 
     var compactStyle: CompactStyle = .flags
     var lineLimit: Int = 3
-    var showOriginal: Bool = true
+    var showOriginal: Bool = false // tap the message in the island to see the original
     var shrinkToFit: Bool = true
 }
 

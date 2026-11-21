@@ -19,42 +19,45 @@ struct TranslatorLiveActivity: Widget {
                 .activitySystemActionForegroundColor(.white)
         } dynamicIsland: { context in
             DynamicIsland {
-                // EXPANDED — shown on long-press, or briefly on an alert update.
+                // EXPANDED (long-press, or briefly on an alert update). About 370 x 160 pt in all:
+                // a row beside the camera, a strip below it, and the bottom region. The actions live
+                // beside the camera so the whole bottom region is the message.
                 DynamicIslandExpandedRegion(.leading) {
-                    HStack(spacing: 4) {
-                        Text(Lang.flag(context.state.sourceLang))
-                        Image(systemName: "arrow.right")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        Text(Lang.flag(context.state.targetLang))
-                    }
-                    .font(.title3)
-                    .padding(.leading, 4)
+                    Text("\(Lang.flag(context.state.sourceLang))→\(Lang.flag(context.state.targetLang))")
+                        .font(.title3)
+                        .padding(.leading, 6)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(context.state.updatedAt, style: .time)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.trailing, 4)
+                    IslandActions(state: context.state)
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    Text(context.attributes.chatName)
-                        .font(.caption.weight(.semibold))
-                        .lineLimit(1)
+                    // The strip under the camera: the AI's tone note when there is one, else who and when.
+                    if context.state.note.isEmpty {
+                        Text("\(context.attributes.chatName) · \(context.state.updatedAt, style: .time)")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    } else {
+                        Label(context.state.note, systemImage: "lightbulb")
+                            .font(.caption)
+                            .foregroundStyle(.yellow)
+                            .lineLimit(1)
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     ExpandedBottom(state: context.state)
                 }
             } compactLeading: {
-                // COMPACT — the resting state, either side of the camera.
+                // COMPACT, the resting state, either side of the camera.
                 CompactLeading(state: context.state)
             } compactTrailing: {
                 CompactTrailing(state: context.state)
             } minimal: {
-                // MINIMAL — when another app's Live Activity is also running.
+                // MINIMAL, when another app's Live Activity is also running.
                 Text(Lang.flag(context.state.sourceLang))
             }
-            .widgetURL(URL(string: "islandtranslator://open"))
+            // A tap anywhere that isn't a button opens the reply composer.
+            .widgetURL(URL(string: "islandtranslator://reply"))
             .keylineTint(.cyan)
         }
     }
@@ -81,23 +84,28 @@ struct CompactTrailing: View {
     let state: TranslatorAttributes.ContentState
 
     var body: some View {
-        switch state.lab.compactStyle {
-        case .snippet:
-            // Deliberately unconstrained: see how much text the system lets through.
-            Text(state.translated)
-                .font(.caption2)
-                .lineLimit(1)
-        case .flags, .codes:
-            if state.unread > 0 {
-                Text("\(state.unread)")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(Color.cyan))
-            } else {
-                Image(systemName: state.incoming ? "text.bubble.fill" : "paperplane.fill")
-                    .foregroundStyle(.cyan)
+        if state.busy {
+            Image(systemName: "ellipsis")
+                .foregroundStyle(.cyan)
+        } else {
+            switch state.lab.compactStyle {
+            case .snippet:
+                // Deliberately unconstrained: see how much text the system lets through.
+                Text(state.translated)
+                    .font(.caption2)
+                    .lineLimit(1)
+            case .flags, .codes:
+                if state.unread > 0 {
+                    Text("\(state.unread)")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(Color.cyan))
+                } else {
+                    Image(systemName: state.incoming ? "text.bubble.fill" : "paperplane.fill")
+                        .foregroundStyle(.cyan)
+                }
             }
         }
     }
@@ -105,63 +113,95 @@ struct CompactTrailing: View {
 
 // MARK: - Expanded
 
-struct ExpandedBottom: View {
+/// Beside the camera: Copy, and the main action, Translate (reads whatever chat is on screen now).
+struct IslandActions: View {
     let state: TranslatorAttributes.ContentState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if !state.note.isEmpty {
-                // AI flow: the nuance beats the original text for the one spare line.
-                Label(state.note, systemImage: "lightbulb")
-                    .font(.caption)
-                    .foregroundStyle(.yellow)
-                    .lineLimit(1)
+        HStack(spacing: 6) {
+            Button(intent: CopyTranslationIntent()) {
+                Image(systemName: "doc.on.doc")
+            }
+            .tint(.white)
+            Button(intent: TranslateScreenIntent()) {
+                Image(systemName: "text.viewfinder")
+            }
+            .tint(.cyan)
+            .disabled(state.busy)
+        }
+        .font(.callout.weight(.semibold))
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.circle)
+        .padding(.trailing, 4)
+    }
+}
+
+struct ExpandedBottom: View {
+    let state: TranslatorAttributes.ContentState
+
+    /// One small line above the message: the reading state or the original. (The AI note sits under the camera.)
+    private var captionShown: Bool { state.busy || state.lab.showOriginal }
+
+    /// The bottom region holds about three lines of body text; a caption or the reply chips take one each.
+    private var messageLines: Int {
+        max(1, state.lab.lineLimit - (captionShown ? 1 : 0) - (state.replies.isEmpty ? 0 : 1))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if state.busy {
+                Label("Reading the screen…", systemImage: "text.viewfinder")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.cyan)
             } else if state.lab.showOriginal {
                 Text(state.original)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
-            Text(state.translated)
-                .font(.body.weight(.semibold))
-                // Leave room for the reply chips when there are any (expanded height tops out ~160 pt).
-                .lineLimit(state.replies.isEmpty ? state.lab.lineLimit : min(state.lab.lineLimit, 2))
-                .minimumScaleFactor(state.lab.shrinkToFit ? 0.6 : 1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            if state.replies.isEmpty {
-                IslandButtons()
-            } else {
+            // Tap the message to swap it with the original.
+            Button(intent: FlipIntent()) {
+                Text(state.translated)
+                    .font(.body.weight(.semibold))
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(messageLines)
+                    .minimumScaleFactor(state.lab.shrinkToFit ? 0.75 : 1)
+                    // Wrap to messageLines instead of shrinking onto one line.
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .opacity(state.busy ? 0.5 : 1)
+            }
+            .buttonStyle(.plain)
+            if !state.replies.isEmpty {
                 ReplyChips(replies: state.replies)
             }
         }
+        .padding(.horizontal, 4)
     }
 }
 
-/// Tap a chip → that reply (in their language) is on the clipboard, ready to paste into the chat.
+/// Tap a chip: that reply (in their language) is on the clipboard, ready to paste into the chat.
 struct ReplyChips: View {
     let replies: [SuggestedReply]
 
     var body: some View {
         HStack(spacing: 6) {
-            Button(intent: TranslateScreenIntent()) {
-                Image(systemName: "text.viewfinder")
-            }
+            // Two chips: three cut every reply to about ten characters.
             ForEach(Array(replies.prefix(2).enumerated()), id: \.offset) { index, reply in
                 Button(intent: CopyReplyIntent(index: index)) {
                     Text(reply.text).lineLimit(1)
                 }
             }
             Spacer(minLength: 0)
-            Button(intent: EndIslandIntent()) {
-                Image(systemName: "xmark")
-            }
         }
         .font(.caption.weight(.semibold))
+        .controlSize(.small)
         .buttonStyle(.bordered)
         .tint(.cyan)
     }
 }
 
+/// The Lock Screen's button row (the island keeps its actions beside the camera instead).
 struct IslandButtons: View {
     var body: some View {
         HStack(spacing: 8) {

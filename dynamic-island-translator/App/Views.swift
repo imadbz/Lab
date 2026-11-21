@@ -137,6 +137,16 @@ struct FitLabView: View {
                         }
                         .foregroundStyle(.primary)
                     }
+                    Button {
+                        model.pushAIFitTest()
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("AI result").font(.subheadline.weight(.semibold))
+                            Text("A translation with a tone note and reply chips, as the Claude reader returns it")
+                                .font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                        }
+                    }
+                    .foregroundStyle(.primary)
                 } header: {
                     Text("Samples")
                 } footer: {
